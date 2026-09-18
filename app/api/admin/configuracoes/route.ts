@@ -9,6 +9,8 @@ const configSchema = z.object({
   moedaTaxa: z.string().min(1).optional(),
   precoUnboxing: z.number().min(0).optional(),
   precoFotoVideo: z.number().min(0).optional(),
+  precoFoto: z.number().min(0).optional(),
+  precoVideo: z.number().min(0).optional(),
   precoMedicao: z.number().min(0).optional(),
   precoReembalagem: z.number().min(0).optional(),
   precoOutro: z.number().min(0).optional(),

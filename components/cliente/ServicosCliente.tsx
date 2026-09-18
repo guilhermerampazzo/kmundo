@@ -9,8 +9,8 @@ type Caixa = { id: string; tracking: string; lojaOrigem: string | null }
 type Servico = { id: string; tipo: string; status: string; descricao: string | null; peso: number | null; largura: number | null; altura: number | null; comprimento: number | null; fotoUrls: string[]; videoUrl: string | null; observacoesEquipe: string | null; caixa: { tracking: string } | null; criadoEm: Date | string }
 
 type Precos = {
-  UNBOXING: number
-  FOTO_VIDEO: number
+  FOTO: number
+  VIDEO: number
   MEDICAO: number
   REEMBALAGEM: number
   OUTRO: number
@@ -18,7 +18,8 @@ type Precos = {
 }
 
 const tipos = [
-  ['FOTO_VIDEO', 'Foto/vídeo'],
+  ['FOTO', 'Foto'],
+  ['VIDEO', 'Vídeo'],
   ['MEDICAO', 'Peso e tamanho'],
   ['REEMBALAGEM', 'Reembalagem'],
   ['OUTRO', 'Outro'],
@@ -29,7 +30,7 @@ type TipoServico = (typeof tipos)[number][0]
 export function ServicosCliente({ caixas, servicos, precos, totalPendente, moedaTotal }: { caixas: Caixa[]; servicos: Servico[]; precos: Precos; totalPendente?: number; moedaTotal?: string }) {
   const router = useRouter()
   const [caixaId, setCaixaId] = useState(caixas[0]?.id ?? '')
-  const [tipo, setTipo] = useState('FOTO_VIDEO')
+  const [tipo, setTipo] = useState('FOTO')
   const [descricao, setDescricao] = useState('')
   const [salvando, setSalvando] = useState(false)
 

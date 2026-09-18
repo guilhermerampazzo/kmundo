@@ -23,10 +23,12 @@ type ServicoRef = { caixaId: string | null; tipo: string }
 const servicoMeta: Record<string, { label: string; color: string; legend: string }> = {
   UNBOXING: { label: 'Unboxing', color: '#22C55E', legend: 'Complete "Unboxing Image"' },
   FOTO_VIDEO: { label: 'Foto/Vídeo', color: '#EF4444', legend: 'Complete "Unboxing Video"' },
+  FOTO: { label: 'Foto', color: '#EF4444', legend: 'Complete "Foto"' },
+  VIDEO: { label: 'Vídeo', color: '#F97316', legend: 'Complete "Vídeo"' },
   MEDICAO: { label: 'Peso/Tamanho', color: '#3B82F6', legend: 'Complete "Inclusions"' },
   REEMBALAGEM: { label: 'Reembalagem', color: '#EAB308', legend: 'Complete "Open Package"' },
 }
-const ordemTipos = ['UNBOXING', 'FOTO_VIDEO', 'MEDICAO', 'REEMBALAGEM'] as const
+const ordemTipos = ['FOTO', 'VIDEO', 'MEDICAO', 'REEMBALAGEM'] as const
 
 export function TrackingCliente({ caixas, servicos = [] }: { caixas: Caixa[]; servicos?: ServicoRef[] }) {
   const concluidosByCaixa = new Map<string, Set<string>>()

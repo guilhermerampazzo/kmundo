@@ -60,10 +60,12 @@ export function OperacionalAdmin({ clientes, caixas, servicos }: { clientes: Cli
   const servicoMeta: Record<string, { label: string; color: string }> = {
     UNBOXING: { label: 'Unboxing', color: '#22C55E' },
     FOTO_VIDEO: { label: 'Foto/Vídeo', color: '#EF4444' },
+    FOTO: { label: 'Foto', color: '#EF4444' },
+    VIDEO: { label: 'Vídeo', color: '#F97316' },
     MEDICAO: { label: 'Medida', color: '#3B82F6' },
     REEMBALAGEM: { label: 'Reembalagem', color: '#EAB308' },
   }
-  const ordemTipos = ['UNBOXING', 'FOTO_VIDEO', 'MEDICAO', 'REEMBALAGEM'] as const
+  const ordemTipos = ['FOTO', 'VIDEO', 'MEDICAO', 'REEMBALAGEM'] as const
   const concluidosByCaixaId = new Map<string, Set<string>>()
   for (const s of servicos) {
     if (s.caixa?.id && s.status === 'CONCLUIDO') {

@@ -106,6 +106,8 @@ model Configuracao {
   moedaTaxa         String    @default("USD")
   precoUnboxing     Float     @default(0)
   precoFotoVideo    Float     @default(0)
+  precoFoto         Float     @default(0)
+  precoVideo        Float     @default(0)
   precoMedicao      Float     @default(0)
   precoReembalagem  Float     @default(0)
   precoOutro        Float     @default(0)
@@ -643,6 +645,8 @@ enum TipoLancamentoFuncionario {
 enum TipoServico {
   UNBOXING
   FOTO_VIDEO
+  FOTO
+  VIDEO
   MEDICAO
   REEMBALAGEM
   OUTRO

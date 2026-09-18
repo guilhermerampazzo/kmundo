@@ -17,6 +17,8 @@ async function main() {
       moedaTaxa: 'USD',
       precoUnboxing: 0,
       precoFotoVideo: 0,
+      precoFoto: 0,
+      precoVideo: 0,
       precoMedicao: 0,
       precoReembalagem: 0,
       precoOutro: 0,

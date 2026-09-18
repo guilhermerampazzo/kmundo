@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { clienteWhereFromSession } from '@/lib/cliente-session'
 import { z } from 'zod'
 
-const createSchema = z.object({ caixaId: z.string().optional(), tipo: z.enum(['UNBOXING', 'FOTO_VIDEO', 'MEDICAO', 'REEMBALAGEM', 'OUTRO']), descricao: z.string().optional() })
+const createSchema = z.object({ caixaId: z.string().optional(), tipo: z.enum(['FOTO', 'VIDEO', 'MEDICAO', 'REEMBALAGEM', 'OUTRO', 'UNBOXING', 'FOTO_VIDEO']), descricao: z.string().optional() })
 const patchSchema = z.object({ status: z.enum(['SOLICITADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'CANCELADO']).optional(), fotoUrls: z.array(z.string().min(1)).max(10).optional(), videoUrl: z.string().min(1).optional(), peso: z.number().positive().optional(), largura: z.number().positive().optional(), altura: z.number().positive().optional(), comprimento: z.number().positive().optional(), descricao: z.string().optional(), observacoesEquipe: z.string().optional() })
 
 async function clienteDaSessao(user: { id?: string | null; email?: string | null; numeroDeSuite?: number | null }) { return prisma.cliente.findFirst({ where: clienteWhereFromSession(user) }) }
@@ -28,11 +28,13 @@ export async function POST(req: NextRequest) {
   try {
     const config = await prisma.configuracao.findFirst()
     const precoMap: Record<string, number> = {
-      UNBOXING: config?.precoUnboxing ?? 0,
-      FOTO_VIDEO: config?.precoFotoVideo ?? 0,
+      FOTO: (config as unknown as { precoFoto?: number } | null)?.precoFoto ?? config?.precoFotoVideo ?? 0,
+      VIDEO: (config as unknown as { precoVideo?: number } | null)?.precoVideo ?? config?.precoFotoVideo ?? 0,
       MEDICAO: config?.precoMedicao ?? 0,
       REEMBALAGEM: config?.precoReembalagem ?? 0,
       OUTRO: config?.precoOutro ?? 0,
+      UNBOXING: config?.precoUnboxing ?? 0,
+      FOTO_VIDEO: config?.precoFotoVideo ?? 0,
     }
     const valor = precoMap[parsed.data.tipo] ?? 0
     const moeda = config?.moedaTaxa ?? 'USD'

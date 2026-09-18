@@ -24,8 +24,9 @@ interface Configuracao {
   koreanBankName: string | null
   koreanBankAccount: string | null
   koreanBankHolder: string | null
-  precoUnboxing: number
-  precoFotoVideo: number
+  precoFotoVideo?: number | null
+  precoFoto: number
+  precoVideo: number
   precoMedicao: number
   precoReembalagem: number
   precoOutro: number
@@ -53,8 +54,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
     diasGratuitos: String(config.diasGratuitos),
     taxaDiariaArmazem: String(config.taxaDiariaArmazem),
     moedaTaxa: config.moedaTaxa,
-    precoUnboxing: String(config.precoUnboxing ?? 0),
-    precoFotoVideo: String(config.precoFotoVideo ?? 0),
+    precoFoto: String((config as unknown as { precoFoto?: number }).precoFoto ?? config.precoFotoVideo ?? 0),
+    precoVideo: String((config as unknown as { precoVideo?: number }).precoVideo ?? config.precoFotoVideo ?? 0),
     precoMedicao: String(config.precoMedicao ?? 0),
     precoReembalagem: String(config.precoReembalagem ?? 0),
     precoOutro: String(config.precoOutro ?? 0),
@@ -85,8 +86,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
           diasGratuitos: parseInt(form.diasGratuitos),
           taxaDiariaArmazem: parseValorMoeda(form.taxaDiariaArmazem, form.moedaTaxa),
           moedaTaxa: form.moedaTaxa,
-          precoUnboxing: parseValorMoeda(form.precoUnboxing, form.moedaTaxa),
-          precoFotoVideo: parseValorMoeda(form.precoFotoVideo, form.moedaTaxa),
+          precoFoto: parseValorMoeda(form.precoFoto, form.moedaTaxa),
+          precoVideo: parseValorMoeda(form.precoVideo, form.moedaTaxa),
           precoMedicao: parseValorMoeda(form.precoMedicao, form.moedaTaxa),
           precoReembalagem: parseValorMoeda(form.precoReembalagem, form.moedaTaxa),
           precoOutro: parseValorMoeda(form.precoOutro, form.moedaTaxa),
@@ -278,24 +279,24 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
         <p className="text-sm mb-4" style={{ color: '#9CA3AF' }}>Valores exibidos ao cliente na solicitação de serviços (na moeda acima). Para KRW digite só números sem ponto: 50000 para 50 mil. Para BRL use vírgula nos centavos: 460,00.</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm font-medium" style={{ color: '#374151' }}>Unboxing</Label>
+            <Label className="text-sm font-medium" style={{ color: '#374151' }}>Foto</Label>
             <Input
-              name="precoUnboxing"
+              name="precoFoto"
               type="text"
               inputMode="decimal"
-              value={form.precoUnboxing}
+              value={form.precoFoto}
               onChange={handleChange}
               className="h-11 mt-1.5"
               style={{ borderRadius: '8px' }}
             />
           </div>
           <div>
-            <Label className="text-sm font-medium" style={{ color: '#374151' }}>Foto / Vídeo</Label>
+            <Label className="text-sm font-medium" style={{ color: '#374151' }}>Vídeo</Label>
             <Input
-              name="precoFotoVideo"
+              name="precoVideo"
               type="text"
               inputMode="decimal"
-              value={form.precoFotoVideo}
+              value={form.precoVideo}
               onChange={handleChange}
               className="h-11 mt-1.5"
               style={{ borderRadius: '8px' }}

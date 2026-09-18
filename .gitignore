@@ -51,3 +51,4 @@ next-env.d.ts
 .kilocode/
 .env (3)
 env (3)
+sshpass*.deb

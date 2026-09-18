@@ -31,7 +31,7 @@ export default async function ServicosPage() {
     <div className="p-4 sm:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold" style={{ color: '#1A1A2E' }}>Serviços</h1>
-        <p className="text-sm" style={{ color: '#6B7280' }}>Unboxing, foto/video, peso e tamanho vinculados ao rastreamento.</p>
+        <p className="text-sm" style={{ color: '#6B7280' }}>Foto/vídeo, peso e tamanho vinculados ao rastreamento.</p>
       </div>
       <ServicosCliente caixas={caixas} servicos={servicos} precos={precos} totalPendente={totalPendente} moedaTotal={moedaTotal} />
     </div>

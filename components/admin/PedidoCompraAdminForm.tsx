@@ -34,11 +34,13 @@ interface Props {
 }
 
 const statusOpcoes = [
-  { value: 'AGUARDANDO_REVISAO', label: 'Aguardando revisão' },
-  { value: 'AGUARDANDO_PAGAMENTO', label: 'Aguardando pagamento' },
-  { value: 'AGUARDANDO_CONFIRMACAO', label: 'Aguardando confirmação' },
-  { value: 'PAGO', label: 'Pago' },
-  { value: 'COMPRADO', label: 'Comprado' },
+  { value: 'SOLICITADO', label: '1. Solicitado' },
+  { value: 'EM_ANALISE', label: '2. Em análise' },
+  { value: 'COTACAO_DISPONIVEL', label: '3. Cotação disponível' },
+  { value: 'AGUARDANDO_CONFIRMACAO_CLIENTE', label: '4. Aguardando confirmação do cliente' },
+  { value: 'AGUARDANDO_PAGAMENTO', label: '5. Aguardando pagamento' },
+  { value: 'PAGAMENTO_FEITO', label: '6. Pagamento feito' },
+  { value: 'COMPRADO', label: '7. Comprado' },
   { value: 'CANCELADO', label: 'Cancelado' },
 ]
 
@@ -77,7 +79,7 @@ export function PedidoCompraAdminForm({ pedido, config }: Props) {
         body.dataLimitePagamento = new Date(dataLimitePagamento).toISOString()
       }
 
-      if (status === 'PAGO' || status === 'COMPRADO') {
+      if (status === 'PAGAMENTO_FEITO' || status === 'COMPRADO') {
         body.pagoEm = new Date().toISOString()
       }
 
@@ -187,8 +189,8 @@ export function PedidoCompraAdminForm({ pedido, config }: Props) {
               <div className="mt-2 space-y-2">
                 <a href={pedido.comprovantePagamentoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: '#FF6B9D' }}>Ver comprovante</a>
                 <p className="text-xs" style={{ color: '#9CA3AF' }}>Enviado em {pedido.comprovanteEnviadoEm ? new Date(pedido.comprovanteEnviadoEm).toLocaleString('pt-BR') : '—'}</p>
-                {pedido.status === 'AGUARDANDO_CONFIRMACAO' && (
-                  <button type="button" onClick={async () => { const res = await fetch(`/api/pedidos/${pedido.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'PAGO' }) }); if (res.ok) { toast.success('Pagamento confirmado! Status alterado para Pago.'); router.refresh() } else toast.error('Erro ao confirmar') }} className="mt-2 px-4 py-2 rounded-xl text-sm font-semibold text-white" style={{ background: '#22C55E' }}>Confirmar pagamento → Pago</button>
+                {pedido.status === 'PAGAMENTO_FEITO' && (
+                  <button type="button" onClick={async () => { const res = await fetch(`/api/pedidos/${pedido.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'COMPRADO' }) }); if (res.ok) { toast.success('Pedido marcado como Comprado.'); router.refresh() } else toast.error('Erro ao confirmar') }} className="mt-2 px-4 py-2 rounded-xl text-sm font-semibold text-white" style={{ background: '#22C55E' }}>Confirmar → Comprado</button>
                 )}
                 {pedido.comprovantePagamentoUrl.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
                   // eslint-disable-next-line @next/next/no-img-element

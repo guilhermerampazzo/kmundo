@@ -7,6 +7,7 @@ import { Settings, Save, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { parseValorMoeda } from '@/lib/moeda'
 
 interface Configuracao {
   id: string
@@ -82,13 +83,13 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
           koreanBankAccount: form.koreanBankAccount || null,
           koreanBankHolder: form.koreanBankHolder || null,
           diasGratuitos: parseInt(form.diasGratuitos),
-          taxaDiariaArmazem: parseFloat(form.taxaDiariaArmazem),
+          taxaDiariaArmazem: parseValorMoeda(form.taxaDiariaArmazem, form.moedaTaxa),
           moedaTaxa: form.moedaTaxa,
-          precoUnboxing: parseFloat(form.precoUnboxing),
-          precoFotoVideo: parseFloat(form.precoFotoVideo),
-          precoMedicao: parseFloat(form.precoMedicao),
-          precoReembalagem: parseFloat(form.precoReembalagem),
-          precoOutro: parseFloat(form.precoOutro),
+          precoUnboxing: parseValorMoeda(form.precoUnboxing, form.moedaTaxa),
+          precoFotoVideo: parseValorMoeda(form.precoFotoVideo, form.moedaTaxa),
+          precoMedicao: parseValorMoeda(form.precoMedicao, form.moedaTaxa),
+          precoReembalagem: parseValorMoeda(form.precoReembalagem, form.moedaTaxa),
+          precoOutro: parseValorMoeda(form.precoOutro, form.moedaTaxa),
         }),
       })
       if (res.ok) {
@@ -245,9 +246,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
             <Label className="text-sm font-medium" style={{ color: '#374151' }}>Taxa diária</Label>
             <Input
               name="taxaDiariaArmazem"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={form.taxaDiariaArmazem}
               onChange={handleChange}
               className="h-11 mt-1.5"
@@ -275,15 +275,14 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
 
       <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
         <h2 className="font-semibold mb-4" style={{ color: '#1A1A2E' }}>Preços dos serviços</h2>
-        <p className="text-sm mb-4" style={{ color: '#9CA3AF' }}>Valores exibidos ao cliente na solicitação de serviços (na moeda acima).</p>
+        <p className="text-sm mb-4" style={{ color: '#9CA3AF' }}>Valores exibidos ao cliente na solicitação de serviços (na moeda acima). Para KRW digite só números sem ponto: 50000 para 50 mil. Para BRL use vírgula nos centavos: 460,00.</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-medium" style={{ color: '#374151' }}>Unboxing</Label>
             <Input
               name="precoUnboxing"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={form.precoUnboxing}
               onChange={handleChange}
               className="h-11 mt-1.5"
@@ -294,9 +293,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
             <Label className="text-sm font-medium" style={{ color: '#374151' }}>Foto / Vídeo</Label>
             <Input
               name="precoFotoVideo"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={form.precoFotoVideo}
               onChange={handleChange}
               className="h-11 mt-1.5"
@@ -307,9 +305,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
             <Label className="text-sm font-medium" style={{ color: '#374151' }}>Peso e tamanho</Label>
             <Input
               name="precoMedicao"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={form.precoMedicao}
               onChange={handleChange}
               className="h-11 mt-1.5"
@@ -320,9 +317,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
             <Label className="text-sm font-medium" style={{ color: '#374151' }}>Reembalagem</Label>
             <Input
               name="precoReembalagem"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={form.precoReembalagem}
               onChange={handleChange}
               className="h-11 mt-1.5"
@@ -333,9 +329,8 @@ export function ConfiguracoesForm({ config, blingConectado }: Props) {
             <Label className="text-sm font-medium" style={{ color: '#374151' }}>Outro</Label>
             <Input
               name="precoOutro"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={form.precoOutro}
               onChange={handleChange}
               className="h-11 mt-1.5"

@@ -10,7 +10,7 @@ export default async function AdminPedidosPage({ searchParams }: { searchParams:
 
   const where: Record<string, unknown> = {}
   if (status) {
-    if (status === 'PAGO_COMPRADO') where['status'] = { in: ['PAGO', 'COMPRADO'] }
+    if (status === 'PAGO_COMPRADO') where['status'] = { in: ['PAGAMENTO_FEITO', 'COMPRADO', 'PAGO'] }
     else where['status'] = status
   }
   if (busca) {

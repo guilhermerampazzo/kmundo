@@ -32,7 +32,16 @@ export function OperacionalAdmin({ clientes, caixas, servicos }: { clientes: Cli
   const [servicoEdit, setServicoEdit] = useState<Record<string, { peso: string; largura: string; altura: string; comprimento: string; videoUrl: string; observacoesEquipe: string }>>({})
   const [buscaCaixas, setBuscaCaixas] = useState('')
   const [buscaServicos, setBuscaServicos] = useState('')
+  const [buscaCliente, setBuscaCliente] = useState('')
 
+  const buscaClienteNorm = buscaCliente.trim().toLowerCase()
+  const clientesFiltrados = buscaClienteNorm
+    ? clientes.filter(c =>
+        c.nomeCompleto.toLowerCase().includes(buscaClienteNorm) ||
+        String(c.numeroDeSuite).padStart(3, '0').includes(buscaClienteNorm) ||
+        String(c.numeroDeSuite).includes(buscaClienteNorm)
+      )
+    : clientes
   const buscaCaixasNorm = buscaCaixas.trim().toLowerCase()
   const caixasFiltradas = caixas.filter(c =>
     c.tracking.toLowerCase().includes(buscaCaixasNorm) ||
@@ -167,8 +176,18 @@ export function OperacionalAdmin({ clientes, caixas, servicos }: { clientes: Cli
       <div className="bg-white border border-gray-100 rounded-lg p-5">
         <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1A1A2E' }}><PackageCheck className="w-4 h-4" /> Caixa Recebida</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="relative md:col-span-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9CA3AF' }} />
+            <input
+              value={buscaCliente}
+              onChange={e => setBuscaCliente(e.target.value)}
+              placeholder="🔍 Buscar cliente por nome ou suíte..."
+              className="h-10 rounded-lg border border-gray-200 pl-9 pr-3 text-sm w-full mb-2"
+            />
+          </div>
+          <div />
           <select value={form.clienteId} onChange={e => setForm(f => ({ ...f, clienteId: e.target.value }))} className="h-10 rounded-lg border border-gray-200 px-3 text-sm">
-            {clientes.map(cliente => <option key={cliente.id} value={cliente.id}>#{String(cliente.numeroDeSuite).padStart(3, '0')} - {cliente.nomeCompleto}</option>)}
+            {clientesFiltrados.map(cliente => <option key={cliente.id} value={cliente.id}>#{String(cliente.numeroDeSuite).padStart(3, '0')} - {cliente.nomeCompleto}</option>)}
           </select>
           <input value={form.tracking} onChange={e => setForm(f => ({ ...f, tracking: e.target.value }))} placeholder="Tracking" className="h-10 rounded-lg border border-gray-200 px-3 text-sm" />
           <input value={form.lojaOrigem} onChange={e => setForm(f => ({ ...f, lojaOrigem: e.target.value }))} placeholder="Loja de origem" className="h-10 rounded-lg border border-gray-200 px-3 text-sm" />

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatarMoeda } from '@/lib/moeda'
 
 type CobrancaCliente = {
   id: string
@@ -65,7 +66,7 @@ export function CobrancasCliente({ cobrancas }: { cobrancas: CobrancaCliente[] }
                   {new Date(c.criadoEm).toLocaleDateString('pt-BR')} | {c.status.replaceAll('_', ' ')}
                 </p>
               </div>
-              <p className="font-semibold" style={{ color: '#FF6B9D' }}>{c.moeda} {c.valor.toFixed(2)}</p>
+              <p className="font-semibold" style={{ color: '#FF6B9D' }}>{formatarMoeda(c.valor, c.moeda)}</p>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">

@@ -13,6 +13,7 @@ type Caixa = {
   observacoes: string | null
   comprovanteCompraUrl: string
   fotoEtiquetaUrl: string | null
+  fotoEtiquetaUrls?: string[]
   status: 'PENDENTE' | 'RECEBIDA'
   recebidoEm: Date | string | null
   criadoEm: Date | string
@@ -37,8 +38,10 @@ export function TrackingCliente({ caixas, servicos = [] }: { caixas: Caixa[]; se
   const router = useRouter()
   const [form, setForm] = useState({ tracking: '', lojaOrigem: '', observacoes: '' })
   const [comprovante, setComprovante] = useState<File | null>(null)
-  const [etiqueta, setEtiqueta] = useState<File | null>(null)
+  const [etiquetas, setEtiquetas] = useState<File[]>([])
   const [salvando, setSalvando] = useState(false)
+
+  const MAX_FOTOS_ETIQUETA = 5
 
   async function registrarCaixa() {
     if (form.tracking.trim().length < 3) return toast.error('Informe o número de rastreamento')
@@ -53,12 +56,14 @@ export function TrackingCliente({ caixas, servicos = [] }: { caixas: Caixa[]; se
       const comprovanteCompraUrl = urlsComprovante[0]
 
       let fotoEtiquetaUrl: string | undefined
-      if (etiqueta) {
+      let fotoEtiquetaUrls: string[] | undefined
+      if (etiquetas.length > 0) {
         const etiquetaData = new FormData()
-        etiquetaData.append('files', etiqueta)
+        etiquetas.slice(0, MAX_FOTOS_ETIQUETA).forEach(f => etiquetaData.append('files', f))
         const et = await fetch('/api/uploads/operacional', { method: 'POST', body: etiquetaData })
         if (!et.ok) throw new Error((await et.json()).error ?? 'Falha no upload da etiqueta')
         const etUrls = await et.json() as { urls: string[] }
+        fotoEtiquetaUrls = etUrls.urls
         fotoEtiquetaUrl = etUrls.urls[0]
       }
 
@@ -71,13 +76,14 @@ export function TrackingCliente({ caixas, servicos = [] }: { caixas: Caixa[]; se
           observacoes: form.observacoes.trim() || undefined,
           comprovanteCompraUrl,
           fotoEtiquetaUrl,
+          fotoEtiquetaUrls,
         }),
       })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Não foi possível registrar')
       toast.success('Caixa registrada! Aguardando recebimento no armazém. A equipe confirmará quando a caixa chegar fisicamente.')
       setForm({ tracking: '', lojaOrigem: '', observacoes: '' })
       setComprovante(null)
-      setEtiqueta(null)
+      setEtiquetas([])
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao registrar')
@@ -100,8 +106,8 @@ export function TrackingCliente({ caixas, servicos = [] }: { caixas: Caixa[]; se
             <input type="file" className="hidden" accept="image/*,application/pdf" onChange={e => setComprovante(e.target.files?.[0] ?? null)} />
           </label>
           <label className="h-10 rounded-lg border border-dashed border-gray-300 px-3 text-sm flex items-center gap-2 cursor-pointer">
-            <Upload className="w-4 h-4" /> {etiqueta ? etiqueta.name : 'Foto da etiqueta (opcional)'}
-            <input type="file" className="hidden" accept="image/*" onChange={e => setEtiqueta(e.target.files?.[0] ?? null)} />
+            <Upload className="w-4 h-4" /> {etiquetas.length > 0 ? `${etiquetas.length} foto(s) — clique para adicionar mais` : 'Fotos da etiqueta (opcional, até 5)'}
+            <input type="file" className="hidden" accept="image/*" multiple onChange={e => setEtiquetas(prev => [...prev, ...Array.from(e.target.files ?? [])].slice(0, MAX_FOTOS_ETIQUETA))} />
           </label>
         </div>
         <button type="button" onClick={registrarCaixa} disabled={salvando} className="mt-4 h-10 rounded-lg px-4 text-sm font-semibold text-white" style={{ background: '#FF6B9D' }}>
@@ -160,15 +166,15 @@ export function TrackingCliente({ caixas, servicos = [] }: { caixas: Caixa[]; se
                   })}
                   <span className="text-xs ml-2" style={{ color: '#9CA3AF' }}>serviços desta caixa</span>
                 </div>
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
                   <a href={caixa.comprovanteCompraUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="rounded bg-gray-100 px-2 py-1 text-xs">Comprovante</a>
-                  {caixa.fotoEtiquetaUrl && (
-                    <a href={caixa.fotoEtiquetaUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-2 rounded bg-gray-100 px-2 py-1 text-xs">
+                  {(caixa.fotoEtiquetaUrls && caixa.fotoEtiquetaUrls.length > 0 ? caixa.fotoEtiquetaUrls : caixa.fotoEtiquetaUrl ? [caixa.fotoEtiquetaUrl] : []).map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-2 rounded bg-gray-100 px-2 py-1 text-xs">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={caixa.fotoEtiquetaUrl} alt="Etiqueta" className="w-8 h-8 rounded object-cover border" style={{ borderColor: '#E5E7EB' }} />
+                      <img src={url} alt="Etiqueta" className="w-8 h-8 rounded object-cover border" style={{ borderColor: '#E5E7EB' }} />
                       Foto etiqueta
                     </a>
-                  )}
+                  ))}
                   {!pendente && <span className="ml-auto text-xs" style={{ color: '#22C55E' }}>Clique para ver detalhes</span>}
                   {pendente && <span className="ml-auto text-xs" style={{ color: '#9CA3AF' }}>Clique para ver detalhes</span>}
                 </div>

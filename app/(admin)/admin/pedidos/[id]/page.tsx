@@ -4,24 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { PedidoCompraAdminForm } from '@/components/admin/PedidoCompraAdminForm'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-
-const statusLabel: Record<string, string> = {
-  AGUARDANDO_REVISAO: 'Aguardando revisão',
-  AGUARDANDO_PAGAMENTO: 'Aguardando pagamento',
-  AGUARDANDO_CONFIRMACAO: 'Aguardando confirmação',
-  PAGO: 'Pago',
-  COMPRADO: 'Comprado',
-  CANCELADO: 'Cancelado',
-}
-
-const statusColors: Record<string, string> = {
-  AGUARDANDO_REVISAO: '#F59E0B',
-  AGUARDANDO_PAGAMENTO: '#8B5CF6',
-  AGUARDANDO_CONFIRMACAO: '#F97316',
-  PAGO: '#3B82F6',
-  COMPRADO: '#22C55E',
-  CANCELADO: '#EF4444',
-}
+import { pedidoStatusLabel as statusLabel, pedidoStatusColors as statusColors } from '@/lib/pedido-status'
 
 export default async function AdminPedidoDetalhePage({ params }: { params: { id: string } }) {
   const [pedido, config] = await Promise.all([
@@ -70,9 +53,23 @@ export default async function AdminPedidoDetalhePage({ params }: { params: { id:
                     <ShoppingBag className="w-4 h-4" style={{ color: '#FF6B9D' }} />
                   </div>
                   <div>
-                    <p className="font-medium text-sm" style={{ color: '#1A1A2E' }}>{item.nomeProduto}</p>
+                    {item.urlProduto ? (
+                      <a href={item.urlProduto} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:underline" style={{ color: '#1A1A2E' }}>{item.nomeProduto} ↗</a>
+                    ) : (
+                      <p className="font-medium text-sm" style={{ color: '#1A1A2E' }}>{item.nomeProduto}</p>
+                    )}
                     <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Quantidade: {item.quantidade}{item.variacao ? ` · ${item.variacao}` : ''}</p>
                     {item.urlProduto && <a href={item.urlProduto} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 inline-block hover:underline" style={{ color: '#FF6B9D' }}>Abrir link do produto</a>}
+                    {(item as { fotoUrls?: string[] }).fotoUrls && (item as { fotoUrls?: string[] }).fotoUrls!.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {(item as { fotoUrls?: string[] }).fotoUrls!.map((url) => (
+                          <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={url} alt={item.nomeProduto} className="w-16 h-16 rounded-lg object-cover border hover:opacity-90 transition-opacity" style={{ borderColor: '#E5E7EB' }} />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     {item.observacoes && <p className="text-sm mt-2" style={{ color: '#6B7280' }}>{item.observacoes}</p>}
                   </div>
                 </div>

@@ -110,6 +110,9 @@ export default async function AdminEnviosPage({ searchParams }: { searchParams: 
           <input name="busca" defaultValue={searchParams.busca ?? ''} placeholder="Buscar cliente por nome ou número da suíte" className="h-10 w-full rounded-lg border pl-9 pr-3 text-sm" style={{ borderColor: '#E5E7EB' }} />
         </div>
         <button className="h-10 rounded-lg px-4 text-sm font-medium text-white" style={{ background: '#FF6B9D' }}>Buscar</button>
+        {(searchParams.status || searchParams.metodo || searchParams.busca) && (
+          <Link href="/admin/envios" className="h-10 rounded-lg px-4 text-sm font-medium inline-flex items-center border bg-white" style={{ borderColor: '#E5E7EB', color: '#6B7280' }}>Limpar</Link>
+        )}
       </form>
       <div className="bg-white rounded-2xl p-4 mb-6 flex flex-wrap gap-2" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
         {[

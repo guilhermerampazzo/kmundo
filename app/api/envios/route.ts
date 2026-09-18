@@ -24,14 +24,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { metodoEnvio, itemIds, valorDeclaradoTexto, enderecoCompleto, usarEnderecoCoreano, enderecoCoreano, telefoneCoreano } = parsed.data
+  const { metodoEnvio, valorDeclaradoTexto, enderecoCompleto, usarEnderecoCoreano, enderecoCoreano, telefoneCoreano } = parsed.data
+  const itemIds = parsed.data.itemIds ?? []
+  const caixaIds = parsed.data.caixaIds ?? []
 
   // Verificar que os itens pertencem ao cliente
-  const itens = await prisma.item.findMany({
+  const itens = itemIds.length > 0 ? await prisma.item.findMany({
     where: { id: { in: itemIds }, clienteId: cliente.id },
-  })
+  }) : []
   if (itens.length !== itemIds.length) {
     return NextResponse.json({ error: 'Um ou mais itens inválidos' }, { status: 400 })
+  }
+
+  // Verificar que as caixas pertencem ao cliente
+  const caixas = caixaIds.length > 0 ? await prisma.caixaRecebida.findMany({
+    where: { id: { in: caixaIds }, clienteId: cliente.id },
+  }) : []
+  if (caixas.length !== caixaIds.length) {
+    return NextResponse.json({ error: 'Uma ou mais caixas inválidas' }, { status: 400 })
   }
 
   // Bloquear envio se houver serviços pendentes (caixinha acumula)
@@ -66,9 +76,13 @@ export async function POST(req: NextRequest) {
       itens: {
         create: itemIds.map((itemId) => ({ itemId })),
       },
+      caixas: {
+        create: caixaIds.map((caixaId) => ({ caixaId })),
+      },
     },
     include: {
       itens: { include: { item: true } },
+      caixas: { include: { caixa: true } },
       cliente: { include: { usuario: { select: { email: true } } } },
     },
   })
@@ -76,7 +90,7 @@ export async function POST(req: NextRequest) {
   const emailCliente = envio.cliente.usuario.email
   const nomeCliente = envio.cliente.nomeCompleto
   const suite = envio.cliente.numeroDeSuite
-  const nomesItens = envio.itens.map(i => i.item.descricao)
+  const nomesItens = [...envio.itens.map(i => i.item.descricao), ...envio.caixas.map(c => `Caixa ${c.caixa.tracking}`)]
 
   Promise.all([
     notificarAdminNovoEnvio({ nomeCliente, suite, metodo: metodoEnvio, itens: nomesItens, envioId: envio.id }),
@@ -114,6 +128,7 @@ export async function GET(req: NextRequest) {
     include: {
       cliente: { select: { nomeCompleto: true, numeroDeSuite: true } },
       itens: { include: { item: { select: { id: true, descricao: true, status: true } } } },
+      caixas: { include: { caixa: { select: { id: true, tracking: true, lojaOrigem: true, status: true } } } },
     },
     orderBy: { criadoEm: 'desc' },
   })

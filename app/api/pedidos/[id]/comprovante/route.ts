@@ -6,7 +6,8 @@ import { saveUpload } from '@/lib/files'
 
 export const dynamic = 'force-dynamic'
 
-// Cliente envia comprovante de PAGAMENTO -> armazena + muda para AGUARDANDO_CONFIRMACAO
+// Cliente envia comprovante de PAGAMENTO -> armazena + muda para PAGAMENTO_FEITO
+// Cliente também pode anexar comprovante de COMPRA sozinho (ex: nota da loja)
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -26,9 +27,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   if (!file || !(file instanceof File) || file.size === 0) return NextResponse.json({ error: 'Envie um arquivo' }, { status: 400 })
 
-  // Validar tipo: cliente só pode enviar pagamento; admin pode enviar ambos
-  if (tipo === 'compra' && session.user.role !== 'ADMIN') return NextResponse.json({ error: 'Apenas admin pode enviar comprovante de compra' }, { status: 403 })
   if (!['pagamento', 'compra'].includes(tipo)) return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
+
+  // Pedido cancelado/comprado não aceita novos comprovantes do cliente
+  if (session.user.role !== 'ADMIN' && ['CANCELADO', 'COMPRADO'].includes(pedido.status)) {
+    return NextResponse.json({ error: 'Este pedido já foi encerrado' }, { status: 400 })
+  }
 
   try {
     const folder = `pedidos/${pedido.id}/${tipo}`
@@ -38,11 +42,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (tipo === 'pagamento') {
       data.comprovantePagamentoUrl = url
       data.comprovanteEnviadoEm = new Date()
-      // Auto transição para AGUARDANDO_CONFIRMACAO se ainda não for pago/comprado/cancelado
-      if (!['PAGO', 'COMPRADO', 'CANCELADO', 'AGUARDANDO_CONFIRMACAO'].includes(pedido.status)) {
-        data.status = 'AGUARDANDO_CONFIRMACAO'
-      } else if (pedido.status === 'AGUARDANDO_PAGAMENTO') {
-        data.status = 'AGUARDANDO_CONFIRMACAO'
+      // Auto transição para PAGAMENTO_FEITO ao anexar comprovante (novo fluxo)
+      if (!['COMPRADO', 'CANCELADO', 'PAGAMENTO_FEITO'].includes(pedido.status)) {
+        data.status = 'PAGAMENTO_FEITO'
       }
     } else {
       data.comprovanteCompraUrl = url

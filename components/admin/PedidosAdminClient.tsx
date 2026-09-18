@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { ShoppingBag, ChevronRight, Save, Search } from 'lucide-react'
-import { pedidoStatusTabs } from '@/lib/pedido-status'
+import { pedidoStatusTabs, pedidoStatusLabel as statusLabel, pedidoStatusColors as statusColors } from '@/lib/pedido-status'
 
 type Pedido = {
   id: string
@@ -13,23 +13,6 @@ type Pedido = {
   criadoEm: string
   cliente: { nomeCompleto: string; numeroDeSuite: number }
   itens: { id: string }[]
-}
-
-const statusLabel: Record<string, string> = {
-  AGUARDANDO_REVISAO: 'Aguardando revisão',
-  AGUARDANDO_PAGAMENTO: 'Aguardando pagamento',
-  AGUARDANDO_CONFIRMACAO: 'Aguardando confirmação',
-  PAGO: 'Pago',
-  COMPRADO: 'Comprado',
-  CANCELADO: 'Cancelado',
-}
-const statusColors: Record<string, string> = {
-  AGUARDANDO_REVISAO: '#F59E0B',
-  AGUARDANDO_PAGAMENTO: '#8B5CF6',
-  AGUARDANDO_CONFIRMACAO: '#F97316',
-  PAGO: '#3B82F6',
-  COMPRADO: '#22C55E',
-  CANCELADO: '#EF4444',
 }
 
 function MiniEditor({ content, onChange, placeholder }: { content: string; onChange: (v: string) => void; placeholder: string }) {

@@ -18,8 +18,7 @@ type Precos = {
 }
 
 const tipos = [
-  ['UNBOXING', 'Unboxing'],
-  ['FOTO_VIDEO', 'Foto/video'],
+  ['FOTO_VIDEO', 'Foto/vídeo'],
   ['MEDICAO', 'Peso e tamanho'],
   ['REEMBALAGEM', 'Reembalagem'],
   ['OUTRO', 'Outro'],
@@ -30,27 +29,29 @@ type TipoServico = (typeof tipos)[number][0]
 export function ServicosCliente({ caixas, servicos, precos, totalPendente, moedaTotal }: { caixas: Caixa[]; servicos: Servico[]; precos: Precos; totalPendente?: number; moedaTotal?: string }) {
   const router = useRouter()
   const [caixaId, setCaixaId] = useState(caixas[0]?.id ?? '')
-  const [tipo, setTipo] = useState('UNBOXING')
+  const [tipo, setTipo] = useState('FOTO_VIDEO')
   const [descricao, setDescricao] = useState('')
   const [salvando, setSalvando] = useState(false)
 
   const [mostrarNovaCaixa, setMostrarNovaCaixa] = useState(false)
   const [novaCaixa, setNovaCaixa] = useState({ tracking: '', lojaOrigem: '', observacoes: '' })
   const [comprovante, setComprovante] = useState<File | null>(null)
-  const [etiqueta, setEtiqueta] = useState<File | null>(null)
+  const [etiquetas, setEtiquetas] = useState<File[]>([])
   const [salvandoCaixa, setSalvandoCaixa] = useState(false)
+
+  const MAX_FOTOS_ETIQUETA = 5
 
   const precoAtual = precos[tipo as TipoServico]
 
   function formatarPreco(valor: number) {
     if (valor <= 0) return 'consultar'
     const moeda = precos.moeda
-    if (moeda === 'KRW') return `${Math.round(valor).toLocaleString('pt-BR')} ${moeda}`
+    if (moeda === 'KRW') return `${Math.round(valor).toLocaleString('en-US')} ${moeda}`
     return `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${moeda}`
   }
 
   function formatarMoeda(valor: number, moeda: string) {
-    if (moeda === 'KRW') return `${Math.round(valor).toLocaleString('pt-BR')} ${moeda}`
+    if (moeda === 'KRW') return `${Math.round(valor).toLocaleString('en-US')} ${moeda}`
     return `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${moeda}`
   }
 
@@ -67,12 +68,14 @@ export function ServicosCliente({ caixas, servicos, precos, totalPendente, moeda
       const comprovanteCompraUrl = urlsComprovante[0]
 
       let fotoEtiquetaUrl: string | undefined
-      if (etiqueta) {
+      let fotoEtiquetaUrls: string[] | undefined
+      if (etiquetas.length > 0) {
         const etiquetaData = new FormData()
-        etiquetaData.append('files', etiqueta)
+        etiquetas.slice(0, MAX_FOTOS_ETIQUETA).forEach(f => etiquetaData.append('files', f))
         const et = await fetch('/api/uploads/operacional', { method: 'POST', body: etiquetaData })
         if (!et.ok) throw new Error((await et.json()).error ?? 'Falha no upload da etiqueta')
         const etUrls = await et.json() as { urls: string[] }
+        fotoEtiquetaUrls = etUrls.urls
         fotoEtiquetaUrl = etUrls.urls[0]
       }
 
@@ -85,6 +88,7 @@ export function ServicosCliente({ caixas, servicos, precos, totalPendente, moeda
           observacoes: novaCaixa.observacoes.trim() || undefined,
           comprovanteCompraUrl,
           fotoEtiquetaUrl,
+          fotoEtiquetaUrls,
         }),
       })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Não foi possível registrar')
@@ -92,7 +96,7 @@ export function ServicosCliente({ caixas, servicos, precos, totalPendente, moeda
       toast.success('Caixa registrada! Aguardando recebimento no armazém.')
       setNovaCaixa({ tracking: '', lojaOrigem: '', observacoes: '' })
       setComprovante(null)
-      setEtiqueta(null)
+      setEtiquetas([])
       setMostrarNovaCaixa(false)
       setCaixaId(caixaCriada.id)
       router.refresh()
@@ -104,6 +108,10 @@ export function ServicosCliente({ caixas, servicos, precos, totalPendente, moeda
   }
 
   async function solicitar() {
+    if (tipo === 'OUTRO' && descricao.trim().length < 3) {
+      toast.error('Descreva o serviço que você precisa no campo de detalhes')
+      return
+    }
     setSalvando(true)
     const res = await fetch('/api/servicos', {
       method: 'POST',
@@ -165,8 +173,8 @@ export function ServicosCliente({ caixas, servicos, precos, totalPendente, moeda
                 <input type="file" className="hidden" accept="image/*,application/pdf" onChange={e => setComprovante(e.target.files?.[0] ?? null)} />
               </label>
               <label className="h-10 rounded-lg border border-dashed border-gray-300 px-3 text-sm flex items-center gap-2 cursor-pointer">
-                <Upload className="w-4 h-4" /> {etiqueta ? etiqueta.name : 'Foto da etiqueta (opcional)'}
-                <input type="file" className="hidden" accept="image/*" onChange={e => setEtiqueta(e.target.files?.[0] ?? null)} />
+                <Upload className="w-4 h-4" /> {etiquetas.length > 0 ? `${etiquetas.length} foto(s) — clique para adicionar mais` : 'Fotos da etiqueta (opcional, até 5)'}
+                <input type="file" className="hidden" accept="image/*" multiple onChange={e => setEtiquetas(prev => [...prev, ...Array.from(e.target.files ?? [])].slice(0, MAX_FOTOS_ETIQUETA))} />
               </label>
             </div>
             <button type="button" onClick={registrarCaixa} disabled={salvandoCaixa} className="mt-3 h-10 rounded-lg px-4 text-sm font-semibold text-white" style={{ background: '#FF6B9D' }}>
@@ -192,11 +200,11 @@ export function ServicosCliente({ caixas, servicos, precos, totalPendente, moeda
               </option>
             ))}
           </select>
-          <textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Detalhes do que precisa" className="md:col-span-2 min-h-20 rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+          <textarea value={descricao} onChange={e => setDescricao(e.target.value)} placeholder={tipo === 'OUTRO' ? 'Descreva aqui o serviço que você precisa *' : 'Detalhes do que precisa'} className="md:col-span-2 min-h-20 rounded-lg border border-gray-200 px-3 py-2 text-sm" />
         </div>
         <p className="text-xs mt-3" style={{ color: '#9CA3AF' }}>
           {precoAtual > 0
-            ? `O valor de ${tipos.find(([v]) => v === tipo)?.[1]} é ${formatarPreco(precoAtual)}. O pagamento é combinado com a equipe após o serviço ser realizado.`
+            ? `O valor de ${tipos.find(([v]) => v === tipo)?.[1]} é ${formatarPreco(precoAtual)}.`
             : 'Valores combinados com a equipe após a solicitação.'}
         </p>
         <button type="button" onClick={solicitar} disabled={salvando} className="mt-3 h-10 rounded-lg px-4 text-sm font-semibold text-white" style={{ background: '#FF6B9D' }}>{salvando ? 'Enviando...' : 'Solicitar serviço'}</button>

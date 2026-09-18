@@ -135,6 +135,7 @@ model Envio {
   clienteId                  String
   cliente                    Cliente       @relation(fields: [clienteId], references: [id])
   itens                      ItemEnvio[]
+  caixas                     CaixaEnvio[]
   metodoEnvio                MetodoEnvio
   status                     StatusEnvio   @default(AGUARDANDO_CONFIRMACAO)
   peso                       Float?
@@ -186,12 +187,14 @@ model CaixaRecebida {
   lojaOrigem           String?
   comprovanteCompraUrl String
   fotoEtiquetaUrl      String?
+  fotoEtiquetaUrls     String[]           @default([])
   observacoes          String?              @db.Text
   status               StatusCaixa          @default(PENDENTE)
   recebidoEm           DateTime?
   criadoEm             DateTime             @default(now())
   atualizadoEm         DateTime             @updatedAt
   solicitacoes         SolicitacaoServico[]
+  envios               CaixaEnvio[]
 
   @@unique([clienteId, tracking])
   @@index([status])
@@ -288,7 +291,7 @@ model PedidoCompra {
   clienteId               String
   cliente                 Cliente               @relation(fields: [clienteId], references: [id])
   itens                   PedidoCompraItem[]
-  status                  StatusPedidoCompra    @default(AGUARDANDO_REVISAO)
+  status                  StatusPedidoCompra    @default(SOLICITADO)
   valorTotal              Float?
   moeda                   String                @default("BRL")
   chavePix                String?
@@ -399,6 +402,7 @@ model PedidoCompraItem {
   quantidade     Int          @default(1)
   variacao       String?
   observacoes    String?      @db.Text
+  fotoUrls       String[]     @default([])
 
   @@index([produtoShopId])
   @@map("pedidos_compra_itens")
@@ -553,6 +557,18 @@ model ItemEnvio {
   @@map("itens_envio")
 }
 
+model CaixaEnvio {
+  id      String        @id @default(cuid())
+  envioId String
+  envio   Envio         @relation(fields: [envioId], references: [id])
+  caixaId String
+  caixa   CaixaRecebida @relation(fields: [caixaId], references: [id])
+
+  @@index([envioId])
+  @@index([caixaId])
+  @@map("caixas_envio")
+}
+
 enum Role {
   ADMIN
   CLIENTE
@@ -593,12 +609,17 @@ enum StatusEnvio {
 }
 
 enum StatusPedidoCompra {
-  AGUARDANDO_REVISAO
+  SOLICITADO
+  EM_ANALISE
+  COTACAO_DISPONIVEL
+  AGUARDANDO_CONFIRMACAO_CLIENTE
   AGUARDANDO_PAGAMENTO
-  AGUARDANDO_CONFIRMACAO
-  PAGO
+  PAGAMENTO_FEITO
   COMPRADO
   CANCELADO
+  AGUARDANDO_REVISAO
+  AGUARDANDO_CONFIRMACAO
+  PAGO
 }
 
 enum FormaPagamentoPedido {

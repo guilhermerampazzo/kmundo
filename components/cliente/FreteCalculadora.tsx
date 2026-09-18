@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Calculator, AlertTriangle, Package, Globe, Weight, Info } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatarMoeda } from '@/lib/moeda'
 
 type Pais = { id: string; nome: string; codigo: string; moeda: string }
 type Caixa = { id: string; nome: string; descricao: string | null; comprimento: number | null; largura: number | null; altura: number | null; pesoMax: number | null }
@@ -102,10 +103,10 @@ export function FreteCalculadora({ paises, caixas }: { paises: Pais[]; caixas: C
             {resultado.encontrado ? (
               <>
                 <p className="text-white/80 text-sm font-medium flex items-center gap-2"><Info className="w-4 h-4" /> Estimativa para {paisSelecionado?.nome ?? 'seu país'}</p>
-                <p className="text-4xl sm:text-5xl font-bold mt-2">{resultado.moeda} {Number(resultado.total).toFixed(2)}</p>
+                <p className="text-4xl sm:text-5xl font-bold mt-2">{formatarMoeda(Number(resultado.total), resultado.moeda ?? 'BRL')}</p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  <span className="px-3 py-1.5 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.2)' }}>Frete: {resultado.moeda} {Number(resultado.valor).toFixed(2)}</span>
-                  {resultado.taxaServico > 0 && <span className="px-3 py-1.5 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.2)' }}>Taxa serviço: {resultado.moeda} {Number(resultado.taxaServico).toFixed(2)}</span>}
+                  <span className="px-3 py-1.5 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.2)' }}>Frete: {formatarMoeda(Number(resultado.valor), resultado.moeda ?? 'BRL')}</span>
+                  {resultado.taxaServico > 0 && <span className="px-3 py-1.5 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.2)' }}>Taxa serviço: {formatarMoeda(Number(resultado.taxaServico), resultado.moeda ?? 'BRL')}</span>}
                   {resultado.tarifa && <span className="px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }}>Faixa {resultado.tarifa.pesoMin}–{resultado.tarifa.pesoMax} kg</span>}
                 </div>
                 <p className="text-white/80 text-xs mt-4 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5" /> Valor apenas estimativo — o valor final será confirmado pela equipe no fechamento.</p>

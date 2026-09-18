@@ -5,25 +5,13 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ShoppingBag } from 'lucide-react'
 import { PedidoComprovanteUpload } from '@/components/cliente/PedidoComprovanteUpload'
+import { PedidoCotacaoAcoes } from '@/components/cliente/PedidoCotacaoAcoes'
+import { pedidoStatusLabel, pedidoStatusColors, pedidoFluxo } from '@/lib/pedido-status'
 
 export const dynamic = 'force-dynamic'
 
-const statusLabel: Record<string, string> = {
-  AGUARDANDO_REVISAO: 'Aguardando revisão',
-  AGUARDANDO_PAGAMENTO: 'Aguardando pagamento',
-  AGUARDANDO_CONFIRMACAO: 'Aguardando confirmação',
-  PAGO: 'Pago',
-  COMPRADO: 'Comprado',
-  CANCELADO: 'Cancelado',
-}
-const statusColors: Record<string, string> = {
-  AGUARDANDO_REVISAO: '#F59E0B',
-  AGUARDANDO_PAGAMENTO: '#8B5CF6',
-  AGUARDANDO_CONFIRMACAO: '#F97316',
-  PAGO: '#3B82F6',
-  COMPRADO: '#22C55E',
-  CANCELADO: '#EF4444',
-}
+const statusLabel = pedidoStatusLabel
+const statusColors = pedidoStatusColors
 
 export default async function PedidoDetalhePage({ params }: { params: { id: string } }) {
   const session = await auth()
@@ -56,6 +44,32 @@ export default async function PedidoDetalhePage({ params }: { params: { id: stri
         </span>
       </div>
 
+      {/* Linha do tempo do funil */}
+      {pedido.status !== 'CANCELADO' && (
+        <div className="bg-white rounded-2xl p-5 mb-5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div className="flex items-center gap-1 overflow-x-auto">
+            {(pedidoFluxo as readonly string[]).map((etapa, i, arr) => {
+              const idxAtual = arr.indexOf(pedido.status)
+              const feito = idxAtual >= 0 && i <= idxAtual
+              return (
+                <div key={etapa} className="flex items-center gap-1 shrink-0">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style={{ background: feito ? '#22C55E' : '#E5E7EB', color: feito ? 'white' : '#9CA3AF' }}>
+                      {feito ? '✓' : i + 1}
+                    </span>
+                    <span className="text-[10px] whitespace-nowrap" style={{ color: feito ? '#1A1A2E' : '#9CA3AF' }}>{statusLabel[etapa]}</span>
+                  </div>
+                  {i < arr.length - 1 && <span className="w-4 h-0.5 mx-1" style={{ background: feito && i < idxAtual ? '#22C55E' : '#E5E7EB' }} />}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Cotação: aceitar ou cancelar */}
+      <PedidoCotacaoAcoes pedidoId={pedido.id} status={pedido.status} valorTotal={pedido.valorTotal} moeda={pedido.moeda} />
+
       <div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
         <h2 className="font-semibold mb-4" style={{ color: '#1A1A2E' }}>Itens do pedido</h2>
         <div className="space-y-3">
@@ -66,9 +80,23 @@ export default async function PedidoDetalhePage({ params }: { params: { id: stri
                   <ShoppingBag className="w-4 h-4" style={{ color: '#FF6B9D' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm" style={{ color: '#1A1A2E' }}>{item.nomeProduto}</p>
+                  {item.urlProduto ? (
+                    <a href={item.urlProduto} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:underline" style={{ color: '#1A1A2E' }}>{item.nomeProduto} ↗</a>
+                  ) : (
+                    <p className="font-medium text-sm" style={{ color: '#1A1A2E' }}>{item.nomeProduto}</p>
+                  )}
                   <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Quantidade: {item.quantidade}{item.variacao ? ` · ${item.variacao}` : ''}</p>
                   {item.urlProduto && <a href={item.urlProduto} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 inline-block hover:underline" style={{ color: '#FF6B9D' }}>Abrir link do produto</a>}
+                  {(item as { fotoUrls?: string[] }).fotoUrls && (item as { fotoUrls?: string[] }).fotoUrls!.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(item as { fotoUrls?: string[] }).fotoUrls!.map((url) => (
+                        <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt={item.nomeProduto} className="w-16 h-16 rounded-lg object-cover border hover:opacity-90 transition-opacity" style={{ borderColor: '#E5E7EB' }} />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                   {item.observacoes && <p className="text-sm mt-2" style={{ color: '#6B7280' }}>{item.observacoes}</p>}
                 </div>
               </div>
@@ -139,7 +167,6 @@ export default async function PedidoDetalhePage({ params }: { params: { id: stri
       {pedidoConfig && (
         <div className="mt-8 space-y-4">
           {[
-            { html: pedidoConfig.comoFuncionaHtml, titulo: 'Como funciona' },
             { html: pedidoConfig.etapasHtml, titulo: 'Etapas do pedido' },
             { html: pedidoConfig.regrasHtml, titulo: 'Regras importantes' },
           ].filter(s => s.html).map((s, i) => (

@@ -7,6 +7,7 @@ import { notificarClienteCaixaRecebida } from '@/lib/email'
 const confirmarSchema = z.object({
   status: z.literal('RECEBIDA'),
   fotoEtiquetaUrl: z.string().min(1, 'Foto da etiqueta obrigatória'),
+  fotoEtiquetaUrls: z.array(z.string()).max(5).optional(),
 })
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -29,6 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     data: {
       status: 'RECEBIDA',
       fotoEtiquetaUrl: parsed.data.fotoEtiquetaUrl,
+      fotoEtiquetaUrls: parsed.data.fotoEtiquetaUrls ?? [parsed.data.fotoEtiquetaUrl],
       recebidoEm: new Date(),
     },
   })

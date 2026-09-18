@@ -7,6 +7,7 @@ export const pedidoCompraItemSchema = z.object({
   quantidade: z.number().int().min(1, 'Quantidade mínima é 1'),
   variacao: z.string().optional(),
   observacoes: z.string().optional(),
+  fotoUrls: z.array(z.string()).max(5).optional().default([]),
 })
 
 export const criarPedidoCompraSchema = z.object({
@@ -16,7 +17,7 @@ export const criarPedidoCompraSchema = z.object({
 })
 
 export const atualizarPedidoCompraAdminSchema = z.object({
-  status: z.enum(['AGUARDANDO_REVISAO', 'AGUARDANDO_PAGAMENTO', 'AGUARDANDO_CONFIRMACAO', 'PAGO', 'COMPRADO', 'CANCELADO']).optional(),
+  status: z.enum(['SOLICITADO', 'EM_ANALISE', 'COTACAO_DISPONIVEL', 'AGUARDANDO_CONFIRMACAO_CLIENTE', 'AGUARDANDO_PAGAMENTO', 'PAGAMENTO_FEITO', 'COMPRADO', 'CANCELADO', 'AGUARDANDO_REVISAO', 'AGUARDANDO_CONFIRMACAO', 'PAGO']).optional(),
   valorTotal: z.number().nonnegative().optional().nullable(),
   moeda: z.string().min(1).optional(),
   chavePix: z.string().optional().nullable(),

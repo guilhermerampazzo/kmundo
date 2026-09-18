@@ -88,8 +88,8 @@ export async function PATCH(
   }
   if (parsed.data.comprovanteEnviadoEm) data.comprovanteEnviadoEm = new Date(parsed.data.comprovanteEnviadoEm)
   if (parsed.data.comprovanteConfirmadoEm) data.comprovanteConfirmadoEm = new Date(parsed.data.comprovanteConfirmadoEm)
-  // Auto preencher confirmadoEm quando admin marca PAGO/COMPRADO
-  if (parsed.data.status === 'PAGO' || parsed.data.status === 'COMPRADO') {
+  // Auto preencher confirmadoEm quando admin marca PAGAMENTO_FEITO/COMPRADO (ou legados PAGO)
+  if (parsed.data.status === 'PAGAMENTO_FEITO' || parsed.data.status === 'PAGO' || parsed.data.status === 'COMPRADO') {
     if (!pedido.comprovanteConfirmadoEm) data.comprovanteConfirmadoEm = new Date()
     if (!pedido.pagoEm) data.pagoEm = new Date()
   }

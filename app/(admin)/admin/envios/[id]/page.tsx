@@ -52,6 +52,11 @@ export default async function AdminEnvioDetalhePage({ params }: { params: { id: 
           item: { select: { id: true, descricao: true, lojaOrigem: true, trackingLoja: true, status: true, fotos: true, observacoes: true, dataEntrada: true } },
         },
       },
+      caixas: {
+        include: {
+          caixa: { select: { id: true, tracking: true, lojaOrigem: true, status: true, comprovanteCompraUrl: true, fotoEtiquetaUrl: true } },
+        },
+      },
     },
   })
 
@@ -107,23 +112,51 @@ export default async function AdminEnvioDetalhePage({ params }: { params: { id: 
           <Package className="w-4 h-4" style={{ color: '#FF6B9D' }} />
           Itens no Envio ({envio.itens.length})
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {envio.itens.map(({ item }) => (
-            <ItemEnvioCard
-              key={item.id}
-              item={{
-                id: item.id,
-                descricao: item.descricao,
-                lojaOrigem: item.lojaOrigem,
-                trackingLoja: item.trackingLoja,
-                status: item.status,
-                fotos: item.fotos,
-                observacoes: item.observacoes,
-                dataEntrada: item.dataEntrada.toISOString(),
-              }}
-            />
-          ))}
-        </div>
+        {envio.itens.length === 0 ? (
+          <p className="text-sm" style={{ color: '#9CA3AF' }}>Nenhum item — envio só com caixas.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {envio.itens.map(({ item }) => (
+              <ItemEnvioCard
+                key={item.id}
+                item={{
+                  id: item.id,
+                  descricao: item.descricao,
+                  lojaOrigem: item.lojaOrigem,
+                  trackingLoja: item.trackingLoja,
+                  status: item.status,
+                  fotos: item.fotos,
+                  observacoes: item.observacoes,
+                  dataEntrada: item.dataEntrada.toISOString(),
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Caixas — full width */}
+      <div className="bg-white rounded-2xl p-6 mb-6" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1A1A2E' }}>
+          <Package className="w-4 h-4" style={{ color: '#C77DFF' }} />
+          Caixas no Envio ({envio.caixas.length})
+        </h2>
+        {envio.caixas.length === 0 ? (
+          <p className="text-sm" style={{ color: '#9CA3AF' }}>Nenhuma caixa — envio só com itens.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {envio.caixas.map(({ caixa }) => (
+              <div key={caixa.id} className="rounded-xl p-4" style={{ background: '#F9FAFB' }}>
+                <p className="font-mono font-medium text-sm" style={{ color: '#1A1A2E' }}>{caixa.tracking}</p>
+                <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{caixa.lojaOrigem ?? '—'} · {caixa.status}</p>
+                <div className="mt-2 flex gap-2">
+                  <a href={caixa.comprovanteCompraUrl} target="_blank" rel="noreferrer" className="text-xs hover:underline" style={{ color: '#FF6B9D' }}>Comprovante</a>
+                  {caixa.fotoEtiquetaUrl && <a href={caixa.fotoEtiquetaUrl} target="_blank" rel="noreferrer" className="text-xs hover:underline" style={{ color: '#FF6B9D' }}>Etiqueta</a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Dados novos da reforma */}

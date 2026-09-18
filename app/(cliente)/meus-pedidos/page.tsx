@@ -3,34 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { clienteWhereFromSession } from '@/lib/cliente-session'
 import Link from 'next/link'
 import { ShoppingBag, ChevronRight } from 'lucide-react'
+import { pedidoStatusLabel, pedidoStatusColors, pedidoStatusTabs } from '@/lib/pedido-status'
 
 export const dynamic = 'force-dynamic'
 
-const statusLabel: Record<string, string> = {
-  AGUARDANDO_REVISAO: 'Aguardando revisão',
-  AGUARDANDO_PAGAMENTO: 'Aguardando pagamento',
-  AGUARDANDO_CONFIRMACAO: 'Aguardando confirmação',
-  PAGO: 'Pago',
-  COMPRADO: 'Comprado',
-  CANCELADO: 'Cancelado',
-}
-const statusColors: Record<string, string> = {
-  AGUARDANDO_REVISAO: '#F59E0B',
-  AGUARDANDO_PAGAMENTO: '#8B5CF6',
-  AGUARDANDO_CONFIRMACAO: '#F97316',
-  PAGO: '#3B82F6',
-  COMPRADO: '#22C55E',
-  CANCELADO: '#EF4444',
-}
+const statusLabel = pedidoStatusLabel
+const statusColors = pedidoStatusColors
 
-const tabs: Array<{ label: string; value: string }> = [
-  { label: 'Todos', value: '' },
-  { label: 'Aguardando revisão', value: 'AGUARDANDO_REVISAO' },
-  { label: 'Aguardando pagamento', value: 'AGUARDANDO_PAGAMENTO' },
-  { label: 'Aguardando confirmação', value: 'AGUARDANDO_CONFIRMACAO' },
-  { label: 'Pago/Confirmado', value: 'PAGO_COMPRADO' },
-  { label: 'Cancelado', value: 'CANCELADO' },
-]
+const tabs = pedidoStatusTabs
 
 export default async function MeusPedidosPage({ searchParams }: { searchParams: { status?: string } }) {
   const session = await auth()
@@ -40,7 +20,7 @@ export default async function MeusPedidosPage({ searchParams }: { searchParams: 
   const status = searchParams.status ?? ''
   const where: Record<string, unknown> = { clienteId: cliente.id }
   if (status) {
-    if (status === 'PAGO_COMPRADO') where['status'] = { in: ['PAGO', 'COMPRADO'] }
+    if (status === 'PAGO_COMPRADO') where['status'] = { in: ['PAGAMENTO_FEITO', 'COMPRADO', 'PAGO'] }
     else where['status'] = status
   }
 
@@ -106,11 +86,9 @@ export default async function MeusPedidosPage({ searchParams }: { searchParams: 
         </div>
       )}
 
-      {(pedidoConfig?.comoFuncionaHtml || pedidoConfig?.etapasHtml || pedidoConfig?.regrasHtml) && (
+      {(pedidoConfig?.etapasHtml || pedidoConfig?.regrasHtml) && (
         <div className="mt-8 space-y-4">
           {[
-            { html: pedidoConfig.comoFuncionaHtml, titulo: 'Como funciona' },
-            { html: pedidoConfig.passoAPassoHtml, titulo: 'Passo a passo' },
             { html: pedidoConfig.podeNaoPodeHtml, titulo: 'O que pode / não pode' },
             { html: pedidoConfig.etapasHtml, titulo: 'Etapas do pedido' },
             { html: pedidoConfig.regrasHtml, titulo: 'Regras importantes' },

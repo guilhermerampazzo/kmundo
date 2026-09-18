@@ -60,7 +60,7 @@ export default async function EnvioDetalhePage({ params }: { params: { id: strin
   const [envio, envioConfig] = await Promise.all([
     prisma.envio.findFirst({
       where: { id: params.id, clienteId: cliente.id },
-      include: { itens: { include: { item: { select: { id: true, descricao: true, lojaOrigem: true, trackingLoja: true } } } }, cobrancas: { include: { notaFiscal: true }, orderBy: { criadoEm: 'desc' } } },
+      include: { itens: { include: { item: { select: { id: true, descricao: true, lojaOrigem: true, trackingLoja: true } } } }, caixas: { include: { caixa: { select: { id: true, tracking: true, lojaOrigem: true, status: true } } } }, cobrancas: { include: { notaFiscal: true }, orderBy: { criadoEm: 'desc' } } },
     }),
     prisma.envioConfig.findFirst(),
   ])
@@ -159,6 +159,25 @@ export default async function EnvioDetalhePage({ params }: { params: { id: strin
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <h2 className="text-sm font-semibold mb-4" style={{ color: '#6B7280' }}>CAIXAS ({envio.caixas.length})</h2>
+        {envio.caixas.length === 0 ? (
+          <p className="text-sm" style={{ color: '#9CA3AF' }}>Nenhuma caixa vinculada.</p>
+        ) : (
+          <div className="space-y-3">
+            {envio.caixas.map(({ caixa }) => (
+              <div key={caixa.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F9FAFB' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#F3E8FF' }}><Package className="w-4 h-4" style={{ color: '#C77DFF' }} /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate font-mono" style={{ color: '#1A1A2E' }}>{caixa.tracking}</p>
+                  {caixa.lojaOrigem && <p className="text-xs" style={{ color: '#9CA3AF' }}>{caixa.lojaOrigem} · {caixa.status}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {envio.observacoes && (

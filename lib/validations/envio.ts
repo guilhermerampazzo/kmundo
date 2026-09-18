@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 export const criarEnvioSchema = z.object({
   metodoEnvio: z.enum(['FEDEX', 'EMS', 'ENVIO_EM_GRUPO']),
-  itemIds: z.array(z.string().cuid()).min(1, 'Selecione ao menos um item'),
+  itemIds: z.array(z.string().cuid()).optional().default([]),
+  caixaIds: z.array(z.string().cuid()).optional().default([]),
   valorDeclaradoTexto: z.string().max(2000).optional().nullable(),
   enderecoCompleto: z.string().min(10, 'Endereço completo é obrigatório').max(2000),
   usarEnderecoCoreano: z.boolean().default(false),
@@ -11,6 +12,9 @@ export const criarEnvioSchema = z.object({
   aceitouTermos: z.boolean().refine(v => v === true, { message: 'Você deve aceitar os Termos de Uso' }),
 }).superRefine((data, ctx) => {
   const isGrupo = data.metodoEnvio === 'ENVIO_EM_GRUPO'
+  if ((data.itemIds?.length ?? 0) + (data.caixaIds?.length ?? 0) === 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['itemIds'], message: 'Selecione ao menos um item ou uma caixa' })
+  }
   if (!isGrupo) {
     if (!data.valorDeclaradoTexto || data.valorDeclaradoTexto.trim().length < 3) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['valorDeclaradoTexto'], message: 'Informe Nome do item + valor em dólar (ex: Álbum BTS — US$ 25)' })

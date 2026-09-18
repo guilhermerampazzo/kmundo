@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
                   quantidade: item.quantidade,
                   variacao: item.variacao || undefined,
                   observacoes: item.observacoes || undefined,
+                  fotoUrls: item.fotoUrls ?? [],
                 })),
       },
     },

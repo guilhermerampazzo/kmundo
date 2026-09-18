@@ -12,6 +12,7 @@ const createSchema = z.object({
   observacoes: z.string().optional(),
   comprovanteCompraUrl: z.string().min(1, 'Comprovante de compra obrigatório'),
   fotoEtiquetaUrl: z.string().optional(),
+  fotoEtiquetaUrls: z.array(z.string()).max(5).optional().default([]),
   itemId: z.string().optional(),
 })
 
@@ -49,7 +50,8 @@ export async function POST(req: NextRequest) {
         lojaOrigem: parsed.data.lojaOrigem?.trim() || undefined,
         observacoes: parsed.data.observacoes?.trim() || undefined,
         comprovanteCompraUrl: parsed.data.comprovanteCompraUrl,
-        fotoEtiquetaUrl: parsed.data.fotoEtiquetaUrl?.trim() || undefined,
+        fotoEtiquetaUrl: parsed.data.fotoEtiquetaUrl?.trim() || parsed.data.fotoEtiquetaUrls?.[0] || undefined,
+        fotoEtiquetaUrls: parsed.data.fotoEtiquetaUrls ?? (parsed.data.fotoEtiquetaUrl ? [parsed.data.fotoEtiquetaUrl] : []),
         itemId: parsed.data.itemId,
         status: 'PENDENTE',
       },

@@ -30,10 +30,12 @@ export function PedidoComprovanteUpload({ pedidoId, status, comprovantePagamento
     }
   }
 
-  if (status === 'CANCELADO') return null
+  if (status === 'CANCELADO' || status === 'COMPRADO') {
+    if (!comprovantePagamentoUrl) return null
+  }
 
   const jaEnviou = !!comprovantePagamentoUrl
-  const aguardandoConfirmacao = status === 'AGUARDANDO_CONFIRMACAO'
+  const pagamentoFeito = status === 'PAGAMENTO_FEITO'
 
   return (
     <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -43,24 +45,24 @@ export function PedidoComprovanteUpload({ pedidoId, status, comprovantePagamento
       </h3>
 
       {jaEnviou && (
-        <div className="mb-4 rounded-xl p-3 flex items-start gap-2" style={{ background: aguardandoConfirmacao ? '#FFF7ED' : '#F0FDF4', border: `1px solid ${aguardandoConfirmacao ? '#FFE4B5' : '#BBF7D0'}` }}>
-          {aguardandoConfirmacao ? <AlertTriangle className="w-4 h-4 mt-0.5" style={{ color: '#F97316' }} /> : <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: '#22C55E' }} />}
+        <div className="mb-4 rounded-xl p-3 flex items-start gap-2" style={{ background: pagamentoFeito ? '#FFF7ED' : '#F0FDF4', border: `1px solid ${pagamentoFeito ? '#FFE4B5' : '#BBF7D0'}` }}>
+          {pagamentoFeito ? <AlertTriangle className="w-4 h-4 mt-0.5" style={{ color: '#F97316' }} /> : <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: '#22C55E' }} />}
           <div className="text-sm">
-            <p className="font-medium" style={{ color: aguardandoConfirmacao ? '#9A3412' : '#166534' }}>
-              {aguardandoConfirmacao ? 'Comprovante recebido — aguardando confirmação' : 'Pagamento confirmado!'}
+            <p className="font-medium" style={{ color: pagamentoFeito ? '#9A3412' : '#166534' }}>
+              {pagamentoFeito ? 'Comprovante recebido — pagamento feito' : 'Pagamento confirmado!'}
             </p>
             <p style={{ color: '#6B7280' }} className="text-xs mt-1">
-              {aguardandoConfirmacao ? 'Recebemos seu comprovante. Vamos verificar o pagamento e confirmar assim que o valor cair. Aguarde, por favor.' : 'Seu pagamento foi confirmado pela equipe.'}
+              {pagamentoFeito ? 'Recebemos seu comprovante. Vamos verificar o pagamento e confirmar assim que o valor cair. Aguarde, por favor.' : 'Seu pagamento foi confirmado pela equipe.'}
             </p>
             <a href={comprovantePagamentoUrl!} target="_blank" rel="noopener noreferrer" className="text-xs font-medium hover:underline mt-1 inline-block" style={{ color: '#FF6B9D' }}>Ver comprovante enviado</a>
           </div>
         </div>
       )}
 
-      {!jaEnviou || aguardandoConfirmacao ? (
+      {(!jaEnviou || pagamentoFeito) && status !== 'COMPRADO' ? (
         <div>
           <p className="text-sm mb-3" style={{ color: '#6B7280' }}>
-            Anexe o comprovante (imagem ou PDF, até 10MB) direto aqui — não precisa enviar por WhatsApp. Ao enviar, o pedido muda automaticamente para <strong>Aguardando confirmação</strong>.
+            Anexe o comprovante (imagem ou PDF, até 10MB) direto aqui — não precisa enviar por WhatsApp. Ao enviar, o pedido muda automaticamente para <strong>Pagamento feito</strong>.
           </p>
           <label className="inline-flex items-center gap-2 px-5 h-11 rounded-xl text-sm font-semibold cursor-pointer text-white hover:opacity-90" style={{ background: 'linear-gradient(135deg,#FF6B9D,#FF4D8D)' }}>
             <Upload className="w-4 h-4" />

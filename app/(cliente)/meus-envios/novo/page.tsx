@@ -16,6 +16,13 @@ interface ItemDisponivel {
   status: string
 }
 
+interface CaixaDisponivel {
+  id: string
+  tracking: string
+  lojaOrigem: string | null
+  status: string
+}
+
 const metodos: { value: MetodoEnvio; label: string; desc: string }[] = [
   { value: 'EMS', label: 'EMS', desc: 'Serviço postal expresso' },
   { value: 'ENVIO_EM_GRUPO', label: 'Envio em Grupo', desc: 'Consolide com outras clientes e economize' },
@@ -26,6 +33,8 @@ export default function NovoEnvioPage() {
   const [metodo, setMetodo] = useState<MetodoEnvio | null>(null)
   const [itensDisponiveis, setItensDisponiveis] = useState<ItemDisponivel[]>([])
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set())
+  const [caixasDisponiveis, setCaixasDisponiveis] = useState<CaixaDisponivel[]>([])
+  const [caixasSelecionadas, setCaixasSelecionadas] = useState<Set<string>>(new Set())
   const [valorDeclaradoTexto, setValorDeclaradoTexto] = useState('')
   const [enderecoCompleto, setEnderecoCompleto] = useState('')
   const [usarEnderecoCoreano, setUsarEnderecoCoreano] = useState(false)
@@ -45,12 +54,14 @@ export default function NovoEnvioPage() {
   useEffect(() => {
     async function carregar() {
       try {
-        const [r1, r2, r3] = await Promise.all([
+        const [r1, r2, r3, rc] = await Promise.all([
           fetch('/api/itens?status=RECEBIDO&limite=100').then(r => r.json()),
           fetch('/api/itens?status=EM_ARMAZEM&limite=100').then(r => r.json()),
           fetch('/api/itens?status=EM_ENVIO&limite=100').then(r => r.json()),
+          fetch('/api/caixas').then(r => r.json()).catch(() => []),
         ])
         setItensDisponiveis([...(r1.itens ?? []), ...(r2.itens ?? []), ...(r3.itens ?? [])])
+        setCaixasDisponiveis(Array.isArray(rc) ? rc : (rc.caixas ?? []))
         fetch('/api/envios/config').then(r => r.json()).then(c => setConfig(c)).catch(() => {})
       } catch {
         setError('Erro ao carregar itens')
@@ -70,9 +81,20 @@ export default function NovoEnvioPage() {
     })
   }
 
+  function toggleCaixa(id: string) {
+    setCaixasSelecionadas(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const totalSelecionados = itensSelecionados.size + caixasSelecionadas.size
+
   async function handleSubmit() {
     if (!metodo) { setError('Selecione o método de envio'); return }
-    if (itensSelecionados.size === 0) { setError('Selecione ao menos um item'); return }
+    if (totalSelecionados === 0) { setError('Selecione ao menos um item ou uma caixa'); return }
     if (!enderecoCompleto.trim() || enderecoCompleto.trim().length < 10) { setError('Endereço completo de envio é obrigatório'); return }
     if (metodo !== 'ENVIO_EM_GRUPO' && valorDeclaradoTexto.trim().length < 3) { setError('Valor declarado é obrigatório para envios individuais'); return }
     if (usarEnderecoCoreano && (!enderecoCoreano.trim() || enderecoCoreano.trim().length < 5)) { setError('Informe o endereço coreano completo'); return }
@@ -85,6 +107,7 @@ export default function NovoEnvioPage() {
       const body: Record<string, unknown> = {
         metodoEnvio: metodo,
         itemIds: Array.from(itensSelecionados),
+        caixaIds: Array.from(caixasSelecionadas),
         valorDeclaradoTexto: valorDeclaradoTexto.trim() || null,
         enderecoCompleto: enderecoCompleto.trim(),
         usarEnderecoCoreano,
@@ -105,7 +128,8 @@ export default function NovoEnvioPage() {
         router.push(`/meus-envios/${data.id}`)
       } else {
         const json = await res.json()
-        const msg = json.error?.valorDeclaradoTexto?._errors?.[0] ?? json.error?.enderecoCompleto?._errors?.[0] ?? json.error ?? 'Erro ao solicitar envio'
+        const fieldErr = json.error?.valorDeclaradoTexto?._errors?.[0] ?? json.error?.enderecoCompleto?._errors?.[0] ?? json.error?.enderecoCoreano?._errors?.[0] ?? json.error?.telefoneCoreano?._errors?.[0] ?? json.error?.itemIds?._errors?.[0] ?? json.error?.aceitouTermos?._errors?.[0]
+        const msg = fieldErr ?? json.error ?? 'Erro ao solicitar envio'
         setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
       }
     } catch {
@@ -115,7 +139,7 @@ export default function NovoEnvioPage() {
     }
   }
 
-  const podeEnviar = metodo && itensSelecionados.size > 0 && aceitouTermos && enderecoCompleto.trim().length >= 10 && (metodo === 'ENVIO_EM_GRUPO' || valorDeclaradoTexto.trim().length >= 3) && (!usarEnderecoCoreano || (enderecoCoreano.trim().length >= 5 && telefoneCoreano.trim().length >= 5))
+  const podeEnviar = metodo && totalSelecionados > 0 && aceitouTermos && enderecoCompleto.trim().length >= 10 && (metodo === 'ENVIO_EM_GRUPO' || valorDeclaradoTexto.trim().length >= 3) && (!usarEnderecoCoreano || (enderecoCoreano.trim().length >= 5 && telefoneCoreano.trim().length >= 5))
 
   return (
     <div className="p-4 sm:p-8 max-w-2xl">
@@ -162,7 +186,8 @@ export default function NovoEnvioPage() {
 
       {/* Itens */}
       <div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <h2 className="font-semibold mb-4" style={{ color: '#1A1A2E' }}>Selecionar Itens *</h2>
+        <h2 className="font-semibold mb-1" style={{ color: '#1A1A2E' }}>Selecionar Itens</h2>
+        <p className="text-xs mb-4" style={{ color: '#9CA3AF' }}>Itens registrados no armazém. Você pode enviar só itens, só caixas ou os dois juntos.</p>
         {carregando ? (
           <p className="text-sm text-center py-6" style={{ color: '#9CA3AF' }}>Carregando itens...</p>
         ) : itensDisponiveis.length === 0 ? (
@@ -179,6 +204,35 @@ export default function NovoEnvioPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: '#1A1A2E' }}>{item.descricao}</p>
                     {item.lojaOrigem && <p className="text-xs" style={{ color: '#9CA3AF' }}>{item.lojaOrigem}</p>}
+                  </div>
+                  <Package className="w-4 h-4" style={{ color: '#D1D5DB' }} />
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Caixas */}
+      <div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <h2 className="font-semibold mb-1" style={{ color: '#1A1A2E' }}>Selecionar Caixas</h2>
+        <p className="text-xs mb-4" style={{ color: '#9CA3AF' }}>Caixas que você registrou no Tracking, com o número de rastreamento.</p>
+        {carregando ? (
+          <p className="text-sm text-center py-6" style={{ color: '#9CA3AF' }}>Carregando caixas...</p>
+        ) : caixasDisponiveis.length === 0 ? (
+          <p className="text-sm text-center py-6" style={{ color: '#9CA3AF' }}>Nenhuma caixa registrada. Registre em Tracking.</p>
+        ) : (
+          <div className="space-y-2">
+            {caixasDisponiveis.map(caixa => {
+              const sel = caixasSelecionadas.has(caixa.id)
+              return (
+                <button key={caixa.id} type="button" onClick={() => toggleCaixa(caixa.id)} className="w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left" style={{ borderColor: sel ? '#FF6B9D' : '#E5E7EB', background: sel ? '#FFF1F5' : 'white' }}>
+                  <div className="w-5 h-5 rounded flex items-center justify-center border-2 shrink-0" style={{ borderColor: sel ? '#FF6B9D' : '#D1D5DB', background: sel ? '#FF6B9D' : 'white' }}>
+                    {sel && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate font-mono" style={{ color: '#1A1A2E' }}>{caixa.tracking}</p>
+                    {caixa.lojaOrigem && <p className="text-xs" style={{ color: '#9CA3AF' }}>{caixa.lojaOrigem} · {caixa.status}</p>}
                   </div>
                   <Package className="w-4 h-4" style={{ color: '#D1D5DB' }} />
                 </button>
@@ -219,7 +273,7 @@ export default function NovoEnvioPage() {
       <div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={usarEnderecoCoreano} onChange={e => setUsarEnderecoCoreano(e.target.checked)} className="w-4 h-4 rounded border-gray-300 accent-pink-500" />
-          <span className="font-semibold text-sm" style={{ color: '#1A1A2E' }}>Utilizar endereço coreano de terceiros</span>
+          <span className="font-semibold text-sm" style={{ color: '#1A1A2E' }}>Utilizar endereço coreano</span>
         </label>
         {usarEnderecoCoreano && (
           <div className="mt-4 space-y-4">
@@ -232,7 +286,7 @@ export default function NovoEnvioPage() {
               <input value={telefoneCoreano} onChange={e => setTelefoneCoreano(e.target.value)} placeholder="010-xxxx-xxxx" className="w-full h-11 rounded-xl border px-3 text-sm" style={{ borderColor: '#E5E7EB' }} />
             </div>
             <div className="rounded-xl p-3 text-xs leading-relaxed" style={{ background: '#FEFCE8', border: '1px solid #FEF08A', color: '#854D0E' }}>
-              Importante: se você estiver utilizando um endereço coreano de terceiros, é obrigatório informar o endereço completo em coreano e o número de telefone da pessoa responsável pelo recebimento. Confira todas as informações antes de solicitar o envio.
+              Importante: se você estiver utilizando um endereço coreano, é obrigatório informar o endereço completo em coreano e o número de telefone da pessoa responsável pelo recebimento. Confira todas as informações antes de solicitar o envio.
             </div>
             {config?.avisoEnderecoCoreanoHtml && <div className="termos-content text-xs" dangerouslySetInnerHTML={{ __html: config.avisoEnderecoCoreanoHtml }} />}
           </div>
@@ -264,8 +318,13 @@ export default function NovoEnvioPage() {
       )}
 
       <Button type="button" onClick={handleSubmit} disabled={salvando || !podeEnviar} className="w-full h-12 font-semibold text-white rounded-xl disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #FF6B9D, #FF4D8D)', borderRadius: '12px' }}>
-        {salvando ? 'Solicitando...' : `Solicitar Envio (${itensSelecionados.size} ${itensSelecionados.size === 1 ? 'item' : 'itens'})`}
+        {salvando ? 'Solicitando...' : `Solicitar Envio (${totalSelecionados} ${totalSelecionados === 1 ? 'item' : 'itens'})`}
       </Button>
+      {!podeEnviar && !salvando && (
+        <p className="text-xs text-center mt-2" style={{ color: '#DC2626' }}>
+          Para solicitar: {!metodo ? 'selecione o método de envio; ' : ''}{totalSelecionados === 0 ? 'selecione ao menos 1 item ou 1 caixa; ' : ''}{enderecoCompleto.trim().length < 10 ? 'preencha o endereço completo; ' : ''}{metodo !== 'ENVIO_EM_GRUPO' && valorDeclaradoTexto.trim().length < 3 ? 'informe o valor declarado; ' : ''}{usarEnderecoCoreano && (enderecoCoreano.trim().length < 5 || telefoneCoreano.trim().length < 5) ? 'complete o endereço/telefone coreano; ' : ''}{!aceitouTermos ? 'aceite os Termos de Uso.' : ''}
+        </p>
+      )}
       <p className="text-xs text-center mt-3" style={{ color: '#9CA3AF' }}>
         Após a solicitação, o pedido ficará em <strong>Aguardando confirmação</strong>. Nossa equipe irá informar o valor do frete e as próximas etapas.
       </p>

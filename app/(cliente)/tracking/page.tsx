@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { clienteWhereFromSession } from '@/lib/cliente-session'
 import { TrackingCliente } from '@/components/cliente/TrackingCliente'
+import { GuiaArmazenamento } from '@/components/cliente/GuiaArmazenamento'
 
 export default async function TrackingPage() {
   const session = await auth()
@@ -19,6 +20,7 @@ export default async function TrackingPage() {
         observacoes: true,
         comprovanteCompraUrl: true,
         fotoEtiquetaUrl: true,
+        fotoEtiquetaUrls: true,
         status: true,
         recebidoEm: true,
         criadoEm: true,
@@ -38,6 +40,7 @@ export default async function TrackingPage() {
         <p className="text-sm" style={{ color: '#6B7280' }}>Registre suas encomendas e acompanhe quando elas chegarem ao armazém.</p>
       </div>
       <TrackingCliente caixas={caixas} servicos={servicos as never} />
+      <GuiaArmazenamento />
     </div>
   )
 }

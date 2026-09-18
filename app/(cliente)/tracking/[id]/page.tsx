@@ -80,14 +80,18 @@ export default async function TrackingDetalhePage({ params }: { params: { id: st
       </div>
 
       <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1A1A2E' }}><ImageIcon className="w-4 h-4" style={{ color: '#FF6B9D' }} /> Foto da etiqueta</h2>
-        {caixa.fotoEtiquetaUrl ? (
+        <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1A1A2E' }}><ImageIcon className="w-4 h-4" style={{ color: '#FF6B9D' }} /> Fotos da etiqueta</h2>
+        {((caixa as { fotoEtiquetaUrls?: string[] }).fotoEtiquetaUrls && (caixa as { fotoEtiquetaUrls?: string[] }).fotoEtiquetaUrls!.length > 0) || caixa.fotoEtiquetaUrl ? (
           <div>
             <p className="text-xs mb-3" style={{ color: '#6B7280' }}>Clique na miniatura para ver em tamanho maior:</p>
-            <a href={caixa.fotoEtiquetaUrl} target="_blank" rel="noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={caixa.fotoEtiquetaUrl} alt="Foto da etiqueta" className="w-32 h-32 rounded-xl object-cover border hover:opacity-90 transition-opacity cursor-pointer" style={{ borderColor: '#E5E7EB' }} />
-            </a>
+            <div className="flex flex-wrap gap-3">
+              {((caixa as { fotoEtiquetaUrls?: string[] }).fotoEtiquetaUrls && (caixa as { fotoEtiquetaUrls?: string[] }).fotoEtiquetaUrls!.length > 0 ? (caixa as { fotoEtiquetaUrls?: string[] }).fotoEtiquetaUrls! : [caixa.fotoEtiquetaUrl!]).map((url) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="Foto da etiqueta" className="w-32 h-32 rounded-xl object-cover border hover:opacity-90 transition-opacity cursor-pointer" style={{ borderColor: '#E5E7EB' }} />
+                </a>
+              ))}
+            </div>
             <p className="text-xs mt-2" style={{ color: '#22C55E' }}>✓ Etiqueta vinculada — confirma que sua caixa chegou ao armazém.</p>
           </div>
         ) : (

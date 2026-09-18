@@ -29,7 +29,7 @@ type Config = {
   regrasAdicionaisHtml?: string | null
 }
 
-function Field({ label, value, onChange, placeholder, rows = 4 }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; rows?: number }) {
+function Field({ label, value, onChange, placeholder, rows = 8 }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; rows?: number }) {
   return (
     <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
       <h3 className="font-semibold mb-3" style={{ color: '#1A1A2E' }}>{label}</h3>
@@ -100,7 +100,7 @@ export function EnvioConfigEditor({ initial }: { initial: Config | null }) {
         <textarea value={cfg.subtitulo} onChange={e => setCfg(c => ({ ...c, subtitulo: e.target.value }))} placeholder="Subtítulo" rows={2} className="w-full rounded-xl border px-3 py-2 text-sm" style={{ borderColor: '#E5E7EB' }} />
       </div>
       {fields.map(f => (
-        <Field key={f.key} label={f.label} value={cfg[f.key] ?? ''} onChange={v => setCfg(c => ({ ...c, [f.key]: v }))} placeholder={f.placeholder} />
+        <Field key={f.key} label={f.label} value={cfg[f.key] ?? ''} onChange={v => setCfg(c => ({ ...c, [f.key]: v }))} placeholder={f.placeholder} rows={f.key === 'termosUsoHtml' ? 16 : 8} />
       ))}
       <button type="button" onClick={salvar} disabled={saving} className="inline-flex items-center gap-2 px-6 h-11 rounded-xl text-sm font-semibold text-white disabled:opacity-60" style={{ background: 'linear-gradient(135deg,#FF6B9D,#FF4D8D)' }}>
         <Save className="w-4 h-4" />{saving ? 'Salvando...' : 'Salvar textos de Envios'}
